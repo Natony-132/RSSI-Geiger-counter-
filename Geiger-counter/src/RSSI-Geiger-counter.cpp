@@ -77,12 +77,17 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(F("----- Loop start -----"));
-  getSwitchState();
-  getRSSIState();
-  outputState();
-  Serial.println(F("----- Loop end -----\n"));
-  delay(500);
+  static int loop_timer = 0;
+
+  int now = millis();
+  if (now - loop_timer > 500) {
+    loop_timer = now;
+    Serial.println(F("----- Loop start -----"));
+    getSwitchState();
+    getRSSIState();
+    outputState();
+    Serial.println(F("----- Loop end -----\n"));
+  }
 }
 
 // -------------------------------------------
