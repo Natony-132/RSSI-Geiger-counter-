@@ -34,12 +34,65 @@ void audioPlay(void);
 void getTheRSSI(void);
 int mapRSSItoRad(int);
 
+enum SYSTEM_MODE { BOTH, A, B };
+enum SYSTEM_MODE mode = BOTH;
+bool audio_enabled = true;
+bool video_enabled = true;
+bool testLast = false;
+
+// -------------------------------------------
+// 1. SWITCH STATE
+
+class debounce {
+private:
+  const int _thePin;
+  int debounce_count;
+  bool value;
+
+public:
+  debounce(int pin) : _thePin(pin), debounce_count(3), value(false){};
+  ~debounce(){};
+  void tick(void) {
+    if (digitalRead(_thePin)) {
+      debounce_count = 3;
+      value = false;
+    } else if (debounce_count) {
+      debounce_count--;
+    } else {
+      value = true;
+    }
+  }
+  bool getValue(void) { return value; }
+};
+
+debounce modeA(MODE_A_PIN);
+debounce modeB(MODE_B_PIN);
+debounce setAudio(SETTING_AUDIO_PIN);
+debounce setVis(SETTING_VIS_PIN);
+debounce button(BUTTON_PIN);
+
+void getSwitchState() {
+  modeA.tick();
+  modeB.tick();
+  setAudio.tick();
+  setVis.tick();
+  button.tick();
+
+  // MODE
+  if (modeA.getValue())
+    mode = A;
+  else if (modeB.getValue())
+    mode = B;
+  else
+    mode = BOTH;
+
+  // SETTING
+  audio_enabled = setAudio.getValue();
+  video_enabled = setVis.getValue();
+}
+
 // I made this up
 #define NOTE_E3 2500
-
-String mode = "BOTH";
-String setting = "AV";
-bool testLast = false;
 
 // Frequencies
 float frequencies[16] = {462.5625, 462.5875, 462.6125, 462.6375,
@@ -76,71 +129,44 @@ void setup() {
   Serial.println(F("Setup complete."));
 }
 
+bool test_mode_worker(bool test_mode) {
+  bool testActive = false;
+  if (test_mode) {
+    testActive = true;
+    if (button.getValue()) {
+      if (!testLast && mode == B && video_enabled) {
+        superArray[9]++;
+        if (superArray[9] > 8)
+          superArray[9] = 0;
+        Serial.print(F("EXCLUDE updated to: "));
+        Serial.println(superArray[9]);
+        delay(20);
+      }
+    } else {
+      // Test mode: fill superArray with high values & run outputs
+      Serial.println(F("Test mode: Filling superArray with 0s."));
+      for (int i = 0; i < 8; i++)
+        superArray[i] = 0;
+      visPlay();
+      audioPlay();
+    }
+    testLast = button.getValue();
+  }
+  return testActive;
+}
+
 void loop() {
   static int loop_timer = 0;
 
   int now = millis();
-  if (now - loop_timer > 500) {
+  if (now - loop_timer > 20) {
     loop_timer = now;
-    Serial.println(F("----- Loop start -----"));
     getSwitchState();
-    getRSSIState();
-    outputState();
-    Serial.println(F("----- Loop end -----\n"));
-  }
-}
-
-// -------------------------------------------
-// 1. SWITCH STATE
-void getSwitchState() {
-  bool modeA = digitalRead(MODE_A_PIN);
-  bool modeB = digitalRead(MODE_B_PIN);
-  bool setAudio = digitalRead(SETTING_AUDIO_PIN);
-  bool setVis = digitalRead(SETTING_VIS_PIN);
-  bool button = digitalRead(BUTTON_PIN);
-
-  // MODE
-  if (modeA)
-    mode = "A";
-  else if (modeB)
-    mode = "B";
-  else
-    mode = "BOTH";
-
-  // SETTING
-  if (setAudio)
-    setting = "AUDIO";
-  else if (setVis)
-    setting = "VISUAL";
-  else
-    setting = "AV";
-
-  Serial.print(F("MODE: "));
-  Serial.print(mode);
-  Serial.print(F(" | SETTING: "));
-  Serial.print(setting);
-  Serial.print(F(" | Button: "));
-  Serial.println(button);
-
-  if (button) {
-    if (!testLast && mode == "B" && setting == "VISUAL") {
-      superArray[9]++;
-      if (superArray[9] > 8)
-        superArray[9] = 0;
-      Serial.print(F("EXCLUDE updated to: "));
-      Serial.println(superArray[9]);
-      delay(20);
+    if (!test_mode_worker(false)) {
+      getRSSIState();
+      outputState();
     }
-  } else {
-    // Test mode: fill superArray with high values & run outputs
-    Serial.println(F("Test mode: Filling superArray with 0s."));
-    for (int i = 0; i < 8; i++)
-      superArray[i] = 0;
-    visPlay();
-    audioPlay();
-    return;
   }
-  testLast = button;
 }
 
 // -------------------------------------------
@@ -149,10 +175,10 @@ void getRSSIState() {
   Serial.println(F("Getting RSSI..."));
   getTheRSSI();
 
-  if (mode == "A") {
+  if (mode == A) {
     for (int i = 0; i < 8; i++)
       superArray[i] = rawRSSI[i];
-  } else if (mode == "B") {
+  } else if (mode == B) {
     for (int i = 0; i < 8; i++)
       superArray[i] = rawRSSI[i + 8];
   } else { // BOTH
@@ -206,10 +232,10 @@ void getTheRSSI() {
 // 3. OUTPUT STATE
 void outputState() {
   Serial.println(F("Outputting state..."));
-  if (setting != "AUDIO")
-    visPlay();
-  if (setting != "VISUAL")
+  if (audio_enabled)
     audioPlay();
+  if (video_enabled)
+    visPlay();
 }
 
 // -------------------------------------------
