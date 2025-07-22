@@ -24,7 +24,116 @@ PCF8574 PCF_24(0x24); // LEDs 9–16
 
 // Globals
 int rawRSSI[16];
-int superArray[10]; // 0–7 RSSI, 8 max, 9 exclude
+int superArray[10]; // 0–7 RSSI, 8 max, 9 exclude              
+
+//-----new stuff-----------------------------------------------------------------------
+int list[7];    // list of the last few RSSI values
+int pass;
+int max = -999;
+bool testLast = false;
+int Exclude = 8;
+bool ModeA;
+bool ModeB;
+bool ModeBoth;
+bool Audio;
+bool VIS;
+bool AV; 
+bool test;
+
+void getOneRSSI(int);
+void setExclude(void);
+void maxFill(void);
+void getMode(void);
+void getSetting(void);
+void getTest(void);
+
+void getMode(void){
+  if(MODE_A_PIN){
+    ModeA = true;
+    ModeB = false;
+    ModeBoth = false;
+  }
+  else if(MODE_B_PIN){
+    ModeA = false;
+    ModeB = true;
+    ModeBoth = false;
+  }
+  else{
+    ModeA = false;
+    ModeB = false;
+    ModeBoth = true;
+  }
+}
+
+void getState(void){
+  if(SETTING_AUDIO_PIN){
+    Audio = true;
+    VIS = false;
+    AV = false;
+  }
+  else if(SETTING_VIS_PIN){
+    Audio = false;
+    VIS = true;
+    AV = false;
+  }
+  else{
+    Audio = false;
+    VIS = false;
+    AV = true;
+  }
+}
+
+void getTest(void){
+  if(BUTTON_PIN){
+    test = true;
+  }
+}
+
+void setExclude(void){
+  if (!testLast){
+    Exclude++;
+    if (Exclude > 9){
+      Exclude = 0;
+    }
+  }
+testLast = true;
+}
+
+void getOneRSSI(int pos) {
+  
+    cc1101.setFrequency(frequencies[pos]);
+    cc1101.receiveDirect();
+    delay(1);
+    pass = cc1101.getRSSI();
+
+    Serial.print(F("RSSI["));
+    Serial.print(pos);
+    Serial.print(F("] @ "));
+    Serial.print(frequencies[pos], 4);
+    Serial.print(F(" MHz = "));
+    Serial.println(rawRSSI[pos]);
+}
+
+void maxFill(void) {
+  list[0] = list[1];
+  list[1] = list[2];
+  list[2] = list[3];
+  list[3] = list[4];
+  list[4] = list[5];
+  list[5] = list[6];
+  list[6] = list[7];
+  list[7] = list[pass];
+
+  // Find max
+
+  for (int i = 0; i < 8; i++) {
+    if (list[i] > max)
+      max = list[i];
+  }
+}
+
+
+//-------------------------------------------------------------------------------
 
 void getSwitchState(void);
 void getRSSIState(void);
