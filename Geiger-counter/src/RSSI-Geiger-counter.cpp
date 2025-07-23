@@ -27,6 +27,9 @@ int rawRSSI[16];
 int superArray[10]; // 0–7 RSSI, 8 max, 9 exclude              
 
 //-----new stuff-----------------------------------------------------------------------
+
+int pos = 7;
+
 int list[7];    // list of the last few RSSI values
 int pass;
 int max = -999;
@@ -46,6 +49,28 @@ void maxFill(void);
 void getMode(void);
 void getSetting(void);
 void getTest(void);
+
+void ExcludePos(void);
+void VOLT(void);
+
+
+void MODE_A(void);
+void MODE_B(void);
+void MODE_BOTH(void);
+
+
+
+//-------------------Functions
+
+void VOLT() {
+  // constrain max between -100 and 0
+  int voltOut = map(constrain(max, -100, 0), -100, 0, 0, 255);
+  analogWrite(VOLTMETER_PIN, voltOut);
+
+  Serial.print(F("Voltmeter output: "));
+  Serial.println(voltOut);
+}
+
 
 void getMode(void){
   if(MODE_A_PIN){
@@ -87,6 +112,9 @@ void getTest(void){
   if(BUTTON_PIN){
     test = true;
   }
+  else{
+    test = false;
+  }
 }
 
 void setExclude(void){
@@ -127,13 +155,21 @@ void maxFill(void) {
   // Find max
 
   for (int i = 0; i < 8; i++) {
-    if (list[i] > max)
+    if (list[i] > max) {
       max = list[i];
+    }
   }
 }
 
+void ExcludePos(){
+  if (pos = Exclude) {
+    pass = -333;
+  }
 
-//-------------------------------------------------------------------------------
+}
+
+//------------------------------------------------------------------------------------------------------------
+
 
 void getSwitchState(void);
 void getRSSIState(void);
@@ -152,6 +188,7 @@ bool testLast = false;
 // -------------------------------------------
 // 1. SWITCH STATE
 
+/*
 class debounce {
 private:
   const int _thePin;
@@ -202,6 +239,8 @@ void getSwitchState() {
 
 // I made this up
 #define NOTE_E3 2500
+*/
+
 
 // Frequencies
 float frequencies[16] = {462.5625, 462.5875, 462.6125, 462.6375,
@@ -238,6 +277,8 @@ void setup() {
   Serial.println(F("Setup complete."));
 }
 
+
+/*
 bool test_mode_worker(bool test_mode) {
   bool testActive = false;
   if (test_mode) {
@@ -263,8 +304,48 @@ bool test_mode_worker(bool test_mode) {
   }
   return testActive;
 }
+*/
 
-void loop() {
+
+void loop() {//------------------------------------------------------------------------------------------------------------- I found the LOOP!
+//part 1
+  pos++;
+  if(pos > 7){
+    pos = 0;
+  }
+
+  getMode();
+  getSetting();
+  getTest();
+
+//part 2
+  if(ModeA){
+    MODE_A();
+  }
+  if(ModeB){
+    MODE_B();
+  }
+  if (ModeBoth){
+    MODE_BOTH();
+  }
+
+  ExcludePos();
+  maxFill();
+
+//part 3
+  if (Audio || AV){
+    audioPlay();
+  }
+
+  if (VIS || AV){
+    visPlay();
+    VOLT();
+  }
+  else{
+    analogWrite(VOLTMETER_PIN, 0);
+  }
+
+  /*
   static int loop_timer = 0;
 
   int now = millis();
@@ -276,10 +357,15 @@ void loop() {
       outputState();
     }
   }
+
+  */
+
 }
 
 // -------------------------------------------
 // 2. RSSI STATE
+
+/*
 void getRSSIState() {
   Serial.println(F("Getting RSSI..."));
   getTheRSSI();
@@ -336,6 +422,8 @@ void getTheRSSI() {
     Serial.println(rawRSSI[i]);
   }
 }
+*/
+
 
 // -------------------------------------------
 // 3. OUTPUT STATE
@@ -350,6 +438,13 @@ void outputState() {
 // -------------------------------------------
 // VISUAL OUTPUT
 void visPlay() {
+
+  if (pass > limRSSI){
+
+
+  }
+
+  /*
   Serial.println(F("VISUAL output:"));
   for (int i = 0; i < 8; i++) {
     if (superArray[i] > limRSSI) {
@@ -370,6 +465,7 @@ void visPlay() {
       Serial.println(F(": OFF"));
     }
   }
+    */
 }
 
 // -------------------------------------------
