@@ -143,14 +143,8 @@ void getOneRSSI(int pos) {
 }
 
 void maxFill(void) {
-  list[0] = list[1];
-  list[1] = list[2];
-  list[2] = list[3];
-  list[3] = list[4];
-  list[4] = list[5];
-  list[5] = list[6];
-  list[6] = list[7];
-  list[7] = list[pass];
+
+  list[pos] = pass;
 
   // Find max
 
