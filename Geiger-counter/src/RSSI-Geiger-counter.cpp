@@ -440,8 +440,15 @@ void outputState() {
 void visPlay() {
 
   if (pass > limRSSI){
+    PCF_20.write(pos, 0);
+    PCF_24.write(pos, 1);
+  }
+  else{
+    PCF_20.write(pos, 1);
+  }
 
-
+  if (pass == -333){
+    PCF_24.write(pos, 0);
   }
 
   /*
@@ -471,24 +478,24 @@ void visPlay() {
 // -------------------------------------------
 // AUDIO OUTPUT
 void audioPlay() {
-  int rssiVal = superArray[8];
-  int radReal = mapRSSItoRad(rssiVal);
+  
+  int radReal = mapRSSItoRad(max);
 
   int radLim = random(1, 101);
   Serial.print(F("AUDIO: Max RSSI="));
-  Serial.print(rssiVal);
+  Serial.print(max);
   Serial.print(F(" RadReal="));
   Serial.print(radReal);
   Serial.print(F(" RadLim="));
   Serial.println(radLim);
 
   if (radLim < radReal) {
-    int noteDuration = 4;
-    tone(SPEAKER_PIN, NOTE_E3, noteDuration);
+   // int noteDuration = 4;
+   // tone(SPEAKER_PIN, NOTE_E3, noteDuration);
     Serial.println(F("Playing tone."));
   }
 
-  int voltOut = map(constrain(rssiVal, -100, 0), -100, 0, 0, 255);
+  int voltOut = map(constrain(max, -100, 0), -100, 0, 0, 255);
   analogWrite(VOLTMETER_PIN, voltOut);
   Serial.print(F("Voltmeter output: "));
   Serial.println(voltOut);
