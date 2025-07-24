@@ -206,7 +206,6 @@ void maxFill(void) {
     if (list[i] > max) {
       max = list[i];
     }
-    i++;
   }
 }
 
