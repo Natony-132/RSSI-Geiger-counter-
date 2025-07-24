@@ -210,7 +210,7 @@ void maxFill(void) {
 }
 
 void ExcludePos(){
-  if (pos = Exclude) {
+  if (pos == Exclude) {
     pass = -333;
   }
 
