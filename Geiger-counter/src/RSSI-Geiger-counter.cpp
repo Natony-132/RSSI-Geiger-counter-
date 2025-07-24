@@ -32,6 +32,7 @@ int pos = 7;
 
 int list[7];    // list of the last few RSSI values
 int pass;
+int passHold;
 int max = -999;
 bool testLast = false;
 int Exclude = 8;
@@ -62,6 +63,50 @@ void MODE_BOTH(void);
 
 //-------------------Functions
 
+void MODE_A() {
+  
+  if(test){
+    pass = -1;
+  }
+  else{
+    getOneRSSI(pos);
+    testLast = false;
+  }
+}
+
+void MODE_B(){
+  if(test){
+    if(VIS) {
+      setExclude();
+    }
+    else {
+      pass = -1;
+    }
+    testLast = true;
+  }
+  else{
+    getOneRSSI(pos + 8 );
+    testLast = false;
+  }
+}
+
+void MODE_BOTH(){
+    if(test){
+    pass = -1;
+  }
+  else{
+    getOneRSSI(pos);
+    passHold = pass;
+    getOneRSSI(pos + 8);
+
+    if(passHold > pass) {
+      pass = passHold;
+    }
+    
+    testLast = false;
+  }
+}
+
 void VOLT() {
   // constrain max between -100 and 0
   int voltOut = map(constrain(max, -100, 0), -100, 0, 0, 255);
@@ -90,7 +135,7 @@ void getMode(void){
   }
 }
 
-void getState(void){
+void getSetting(void){
   if(SETTING_AUDIO_PIN){
     Audio = true;
     VIS = false;
@@ -127,19 +172,19 @@ void setExclude(void){
 testLast = true;
 }
 
-void getOneRSSI(int pos) {
+void getOneRSSI(int spot) {
   
-    cc1101.setFrequency(frequencies[pos]);
+    cc1101.setFrequency(frequencies[spot]);
     cc1101.receiveDirect();
     delay(1);
     pass = cc1101.getRSSI();
 
     Serial.print(F("RSSI["));
-    Serial.print(pos);
+    Serial.print(spot);
     Serial.print(F("] @ "));
-    Serial.print(frequencies[pos], 4);
+    Serial.print(frequencies[spot], 4);
     Serial.print(F(" MHz = "));
-    Serial.println(rawRSSI[pos]);
+    Serial.println(rawRSSI[spot]);
 }
 
 void maxFill(void) {
