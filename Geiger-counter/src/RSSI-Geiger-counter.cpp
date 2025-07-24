@@ -26,6 +26,15 @@ PCF8574 PCF_24(0x24); // LEDs 9–16
 int rawRSSI[16];
 int superArray[10]; // 0–7 RSSI, 8 max, 9 exclude              
 
+// Frequencies
+float frequencies[16] = {462.5625, 462.5875, 462.6125, 462.6375,
+                         462.6625, 462.6875, 462.7125, 433.0000,
+                         462.5500, 462.5750, 462.6000, 462.6250,
+                         462.6500, 462.6750, 462.7000, 462.7250};
+
+// Threshold
+const int limRSSI = -60;
+
 //-----new stuff-----------------------------------------------------------------------
 
 int pos = 7;
@@ -102,7 +111,7 @@ void MODE_BOTH(){
     if(passHold > pass) {
       pass = passHold;
     }
-    
+
     testLast = false;
   }
 }
@@ -222,7 +231,6 @@ enum SYSTEM_MODE { BOTH, A, B };
 enum SYSTEM_MODE mode = BOTH;
 bool audio_enabled = true;
 bool video_enabled = true;
-bool testLast = false;
 
 // -------------------------------------------
 // 1. SWITCH STATE
@@ -281,14 +289,7 @@ void getSwitchState() {
 */
 
 
-// Frequencies
-float frequencies[16] = {462.5625, 462.5875, 462.6125, 462.6375,
-                         462.6625, 462.6875, 462.7125, 433.0000,
-                         462.5500, 462.5750, 462.6000, 462.6250,
-                         462.6500, 462.6750, 462.7000, 462.7250};
 
-// Threshold
-const int limRSSI = -60;
 
 void setup() {
   Serial.begin(9600);
