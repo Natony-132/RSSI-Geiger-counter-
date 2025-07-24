@@ -206,6 +206,7 @@ void maxFill(void) {
     if (list[i] > max) {
       max = list[i];
     }
+    i++;
   }
 }
 
@@ -462,7 +463,7 @@ void getTheRSSI() {
     Serial.println(rawRSSI[i]);
   }
 }
-*/
+
 
 
 // -------------------------------------------
@@ -474,6 +475,8 @@ void outputState() {
   if (video_enabled)
     visPlay();
 }
+
+*/
 
 // -------------------------------------------
 // VISUAL OUTPUT
@@ -491,7 +494,7 @@ void visPlay() {
     PCF_24.write(pos, 0);
   }
 
-  /*
+  
   Serial.println(F("VISUAL output:"));
   for (int i = 0; i < 8; i++) {
     if (superArray[i] > limRSSI) {
@@ -512,8 +515,11 @@ void visPlay() {
       Serial.println(F(": OFF"));
     }
   }
-    */
+    
 }
+
+
+
 
 // -------------------------------------------
 // AUDIO OUTPUT
