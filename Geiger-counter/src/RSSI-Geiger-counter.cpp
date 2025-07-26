@@ -1,4 +1,4 @@
-// #include "pitches.h"
+ #include "pitches.h"
 
 #include <Arduino.h>
 
@@ -18,9 +18,9 @@ PCF8574 PCF_24(0x24); // LEDs 9–16
 #define MODE_B_PIN 6
 #define SETTING_AUDIO_PIN 7
 #define SETTING_VIS_PIN 8
-#define BUTTON_PIN 9
+#define BUTTON_PIN 14
 #define SPEAKER_PIN 3
-#define VOLTMETER_PIN A0
+#define VOLTMETER_PIN 9
 
 // Globals
 int rawRSSI[16];
@@ -33,9 +33,7 @@ float frequencies[16] = {462.5625, 462.5875, 462.6125, 462.6375,
                          462.6500, 462.6750, 462.7000, 462.7250};
 
 // Threshold
-const int limRSSI = -60;
-
-//-----new stuff-----------------------------------------------------------------------
+const int limRSSI = -50;
 
 int pos = 7;
 
@@ -63,12 +61,13 @@ void getTest(void);
 void ExcludePos(void);
 void VOLT(void);
 
-
 void MODE_A(void);
 void MODE_B(void);
 void MODE_BOTH(void);
 
-
+void visPlay(void);
+void audioPlay(void);
+int mapRSSItoRad(int);
 
 //-------------------Functions
 
@@ -175,7 +174,7 @@ void getTest(void){
 void setExclude(void){
   if (!testLast){
     Exclude++;
-    if (Exclude > 9){
+    if (Exclude > 8){
       Exclude = 0;
     }
   }
@@ -188,14 +187,6 @@ void getOneRSSI(int spot) {
     cc1101.receiveDirect();
     delay(5);
     pass = cc1101.getRSSI();
-/*
-    Serial.print(F("RSSI["));
-    Serial.print(spot);
-    Serial.print(F("] @ "));
-    Serial.print(frequencies[spot], 4);
-    Serial.print(F(" MHz = "));
-    Serial.println(rawRSSI[spot]);
-*/
 
 }
 
@@ -218,79 +209,6 @@ void ExcludePos(){
   }
 
 }
-
-//------------------------------------------------------------------------------------------------------------
-
-
-void getSwitchState(void);
-void getRSSIState(void);
-void outputState(void);
-void visPlay(void);
-void audioPlay(void);
-void getTheRSSI(void);
-int mapRSSItoRad(int);
-
-enum SYSTEM_MODE { BOTH, A, B };
-enum SYSTEM_MODE mode = BOTH;
-bool audio_enabled = true;
-bool video_enabled = true;
-
-// -------------------------------------------
-// 1. SWITCH STATE
-
-/*
-class debounce {
-private:
-  const int _thePin;
-  int debounce_count;
-  bool value;
-
-public:
-  debounce(int pin) : _thePin(pin), debounce_count(3), value(false){};
-  ~debounce(){};
-  void tick(void) {
-    if (digitalRead(_thePin)) {
-      debounce_count = 3;
-      value = false;
-    } else if (debounce_count) {
-      debounce_count--;
-    } else {
-      value = true;
-    }
-  }
-  bool getValue(void) { return value; }
-};
-
-debounce modeA(MODE_A_PIN);
-debounce modeB(MODE_B_PIN);
-debounce setAudio(SETTING_AUDIO_PIN);
-debounce setVis(SETTING_VIS_PIN);
-debounce button(BUTTON_PIN);
-
-void getSwitchState() {
-  modeA.tick();
-  modeB.tick();
-  setAudio.tick();
-  setVis.tick();
-  button.tick();
-
-  // MODE
-  if (modeA.getValue())
-    mode = A;
-  else if (modeB.getValue())
-    mode = B;
-  else
-    mode = BOTH;
-
-  // SETTING
-  audio_enabled = setAudio.getValue();
-  video_enabled = setVis.getValue();
-}
-
-// I made this up
-#define NOTE_E3 2500
-*/
-
 
 
 
@@ -319,34 +237,6 @@ void setup() {
   Serial.println(F("Setup complete."));
 }
 
-
-/*
-bool test_mode_worker(bool test_mode) {
-  bool testActive = false;
-  if (test_mode) {
-    testActive = true;
-    if (button.getValue()) {
-      if (!testLast && mode == B && video_enabled) {
-        superArray[9]++;
-        if (superArray[9] > 8)
-          superArray[9] = 0;
-        Serial.print(F("EXCLUDE updated to: "));
-        Serial.println(superArray[9]);
-        delay(20);
-      }
-    } else {
-      // Test mode: fill superArray with high values & run outputs
-      Serial.println(F("Test mode: Filling superArray with 0s."));
-      for (int i = 0; i < 8; i++)
-        superArray[i] = 0;
-      visPlay();
-      audioPlay();
-    }
-    testLast = button.getValue();
-  }
-  return testActive;
-}
-*/
 
 
 void loop() {//------------------------------------------------------------------------------------------------------------- I found the LOOP!
@@ -387,97 +277,7 @@ void loop() {//-----------------------------------------------------------------
     analogWrite(VOLTMETER_PIN, 0);
   }
 
-  /*
-  static int loop_timer = 0;
-
-  int now = millis();
-  if (now - loop_timer > 20) {
-    loop_timer = now;
-    getSwitchState();
-    if (!test_mode_worker(false)) {
-      getRSSIState();
-      outputState();
-    }
-  }
-
-  */
-
 }
-
-// -------------------------------------------
-// 2. RSSI STATE
-
-/*
-void getRSSIState() {
-  Serial.println(F("Getting RSSI..."));
-  getTheRSSI();
-
-  if (mode == A) {
-    for (int i = 0; i < 8; i++)
-      superArray[i] = rawRSSI[i];
-  } else if (mode == B) {
-    for (int i = 0; i < 8; i++)
-      superArray[i] = rawRSSI[i + 8];
-  } else { // BOTH
-    for (int i = 0; i < 8; i++) {
-      superArray[i] = max(rawRSSI[i], rawRSSI[i + 8]);
-    }
-  }
-
-  // Apply EXCLUDE
-  if (superArray[9] != 0) {
-    int ex = superArray[9] - 1;
-    if (ex >= 0 && ex < 8) {
-      Serial.print(F("Excluding channel "));
-      Serial.println(ex);
-      superArray[ex] = -333;
-    }
-  }
-
-  // Find max
-  int maxVal = -999;
-  for (int i = 0; i < 8; i++) {
-    if (superArray[i] > maxVal)
-      maxVal = superArray[i];
-  }
-  superArray[8] = maxVal;
-
-  Serial.print(F("superArray: "));
-  for (int i = 0; i < 10; i++) {
-    Serial.print(superArray[i]);
-    Serial.print(F(" "));
-  }
-  Serial.println();
-}
-
-void getTheRSSI() {
-  for (int i = 0; i < 16; i++) {
-    cc1101.setFrequency(frequencies[i]);
-    cc1101.receiveDirect();
-    delay(1);
-    rawRSSI[i] = cc1101.getRSSI();
-    Serial.print(F("RSSI["));
-    Serial.print(i);
-    Serial.print(F("] @ "));
-    Serial.print(frequencies[i], 4);
-    Serial.print(F(" MHz = "));
-    Serial.println(rawRSSI[i]);
-  }
-}
-
-
-
-// -------------------------------------------
-// 3. OUTPUT STATE
-void outputState() {
-  Serial.println(F("Outputting state..."));
-  if (audio_enabled)
-    audioPlay();
-  if (video_enabled)
-    visPlay();
-}
-
-*/
 
 // -------------------------------------------
 // VISUAL OUTPUT
@@ -485,7 +285,7 @@ void visPlay() {
 
   if (pass > limRSSI){
     PCF_20.write(pos, 0);
-    PCF_24.write(pos, 1);
+    
   }
   else{
     PCF_20.write(pos, 1);
@@ -493,6 +293,9 @@ void visPlay() {
 
   if (pass == -333){
     PCF_24.write(pos, 0);
+  }
+  else {
+    PCF_24.write(pos, 1);
   }
     
 }
@@ -504,16 +307,10 @@ void audioPlay() {
   int radReal = mapRSSItoRad(max);
 
   int radLim = random(1, 101);
-  Serial.print(F("AUDIO: Max RSSI="));
-  Serial.print(max);
-  Serial.print(F(" RadReal="));
-  Serial.print(radReal);
-  Serial.print(F(" RadLim="));
-  Serial.println(radLim);
 
   if (radLim < radReal) {
-   // int noteDuration = 4;
-   // tone(SPEAKER_PIN, NOTE_E3, noteDuration);
+    int noteDuration = 4;
+    tone(SPEAKER_PIN, NOTE_E3, noteDuration);
     Serial.println(F("Playing tone."));
   }
 
