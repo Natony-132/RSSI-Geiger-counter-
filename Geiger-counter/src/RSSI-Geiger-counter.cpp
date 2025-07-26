@@ -75,6 +75,7 @@ void MODE_A() {
   
   if(test){
     pass = -1;
+    delay(15);
   }
   else{
     getOneRSSI(pos);
@@ -89,6 +90,7 @@ void MODE_B(){
     }
     else {
       pass = -1;
+      delay(15);
     }
     testLast = true;
   }
@@ -101,6 +103,7 @@ void MODE_B(){
 void MODE_BOTH(){
     if(test){
     pass = -1;
+    delay(15);
   }
   else{
     getOneRSSI(pos);
@@ -119,9 +122,6 @@ void VOLT() {
   // constrain max between -100 and 0
   int voltOut = map(constrain(max, -100, 0), -100, 0, 0, 255);
   analogWrite(VOLTMETER_PIN, voltOut);
-
-  Serial.print(F("Voltmeter output: "));
-  Serial.println(voltOut);
 }
 
 
@@ -311,13 +311,10 @@ void audioPlay() {
   if (radLim < radReal) {
     int noteDuration = 4;
     tone(SPEAKER_PIN, NOTE_E3, noteDuration);
-    Serial.println(F("Playing tone."));
   }
 
   int voltOut = map(constrain(max, -100, 0), -100, 0, 0, 255);
   analogWrite(VOLTMETER_PIN, voltOut);
-  Serial.print(F("Voltmeter output: "));
-  Serial.println(voltOut);
 }
 
 // Helper: map RSSI to radReal
