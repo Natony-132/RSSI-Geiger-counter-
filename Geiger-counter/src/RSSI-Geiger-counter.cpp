@@ -127,12 +127,12 @@ void VOLT() {
 
 
 void getMode(void){
-  if(MODE_A_PIN){
+  if(digitalRead(MODE_A_PIN)) {
     ModeA = true;
     ModeB = false;
     ModeBoth = false;
   }
-  else if(MODE_B_PIN){
+  else if(digitalRead(MODE_B_PIN)) {
     ModeA = false;
     ModeB = true;
     ModeBoth = false;
@@ -145,12 +145,12 @@ void getMode(void){
 }
 
 void getSetting(void){
-  if(SETTING_AUDIO_PIN){
+  if(digitalRead(SETTING_AUDIO_PIN)) {
     Audio = true;
     VIS = false;
     AV = false;
   }
-  else if(SETTING_VIS_PIN){
+  else if(digitalRead(SETTING_VIS_PIN)) {
     Audio = false;
     VIS = true;
     AV = false;
@@ -163,7 +163,8 @@ void getSetting(void){
 }
 
 void getTest(void){
-  if(BUTTON_PIN){
+  
+  if(digitalRead(BUTTON_PIN)) {
     test = true;
   }
   else{
@@ -293,8 +294,7 @@ void getSwitchState() {
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial)
-    ;
+  while (!Serial);
   Serial.println(F("Setup starting..."));
 
   pinMode(MODE_A_PIN, INPUT);
