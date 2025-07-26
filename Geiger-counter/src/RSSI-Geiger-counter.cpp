@@ -39,7 +39,7 @@ const int limRSSI = -60;
 
 int pos = 7;
 
-int list[7];    // list of the last few RSSI values
+int list[8];    // list of the last few RSSI values
 int pass;
 int passHold;
 int max = -999;
@@ -186,21 +186,23 @@ void getOneRSSI(int spot) {
   
     cc1101.setFrequency(frequencies[spot]);
     cc1101.receiveDirect();
-    delay(1);
+    delay(5);
     pass = cc1101.getRSSI();
-
+/*
     Serial.print(F("RSSI["));
     Serial.print(spot);
     Serial.print(F("] @ "));
     Serial.print(frequencies[spot], 4);
     Serial.print(F(" MHz = "));
     Serial.println(rawRSSI[spot]);
+*/
+
 }
 
 void maxFill(void) {
 
   list[pos] = pass;
-
+  max = pass;
   // Find max
 
   for (int i = 0; i < 8; i++) {
@@ -492,33 +494,8 @@ void visPlay() {
   if (pass == -333){
     PCF_24.write(pos, 0);
   }
-
-  
-  Serial.println(F("VISUAL output:"));
-  for (int i = 0; i < 8; i++) {
-    if (superArray[i] > limRSSI) {
-      PCF_20.write(i, 0);
-      Serial.print(F("LED "));
-      Serial.print(i + 1);
-      Serial.println(F(": ON"));
-    } else if (superArray[i] == -333) {
-      PCF_24.write(i, 0);
-      Serial.print(F("LED "));
-      Serial.print(i + 9);
-      Serial.println(F(": EXCLUDED ON"));
-    } else {
-      PCF_20.write(i, 1);
-      PCF_24.write(i, 1);
-      Serial.print(F("LED "));
-      Serial.print(i + 1);
-      Serial.println(F(": OFF"));
-    }
-  }
     
 }
-
-
-
 
 // -------------------------------------------
 // AUDIO OUTPUT
